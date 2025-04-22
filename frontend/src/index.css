@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f4f4f4;
+  color: #222;
+  padding: 2rem;
+}
+
+input, button {
+  display: block;
+  margin: 1rem 0;
+  padding: 0.5rem;
+}
+
+div {
+  margin-bottom: 1rem;
+}
