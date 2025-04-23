@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useRef } from 'react';
+import { useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchNotes from './components/SearchNotes';
 import ThemeToggle from './components/ThemeToggle'; // Import the new component
@@ -9,7 +11,12 @@ export default function NotesPage() {
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
   const navigate = useNavigate();
+  const editTitleRef = useRef(null);
+  
 
   const fetchNotes = () => {
     const token = localStorage.getItem('token');
@@ -30,6 +37,24 @@ export default function NotesPage() {
     fetchNotes();
   }, []);
 
+  useEffect(() => {
+    if (editingNoteId) {
+      setTimeout(() => {
+        if (editTitleRef.current) {
+          editTitleRef.current.focus();
+        }
+      }, 0);
+    }
+  }, [editingNoteId]);
+
+
+  useLayoutEffect(() => {
+    if (editingNoteId && editTitleRef.current) {
+      editTitleRef.current.focus();
+    }
+  }, [editingNoteId]);
+
+  
   const handleAddNote = async () => {
     const token = localStorage.getItem('token');
     try {
@@ -70,9 +95,36 @@ export default function NotesPage() {
     }
   };
 
+  const saveEdit = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`http://localhost:4002/notes/${editingNoteId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title: editTitle, content: editContent }),
+    });
+  
+    if (res.ok) {
+      toast.success('Заметка обновлена');
+      setEditingNoteId(null);
+      fetchNotes(); // обновим список
+    } else {
+      toast.error('Ошибка обновления');
+    }
+  };
+  
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const startEdit = (note) => {
+    setEditingNoteId(note.id);
+    setEditTitle(note.title);
+    setEditContent(note.content);
   };
 
   return (
@@ -105,9 +157,24 @@ export default function NotesPage() {
 
       {filteredNotes.length > 0 ? filteredNotes.map(note => (
         <div className="note-item" key={note.id}>
-          <strong>{note.title}</strong>
-          <p>{note.content}</p>
-          <button onClick={() => handleDeleteNote(note.id)}>Удалить заметку</button>
+{editingNoteId === note.id ? (
+  <div>
+    <input   ref={editTitleRef} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+    <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} />
+    <button onClick={saveEdit}>Сохранить</button>
+    <button onClick={() => setEditingNoteId(null)}>Отмена</button>
+  </div>
+) : (
+  <div>
+    
+    <strong>{note.title}</strong>
+    <p>{note.content}</p>
+    <button onClick={() => startEdit(note)}>Редактировать</button>
+    <button onClick={() => handleDeleteNote(note.id)}>Удалить</button>
+    <small>{new Date(note.created_at).toLocaleString()}</small>
+  </div>
+)}
+
         </div>
       )) : <div className="empty-notes">{notes.length > 0 ? 'Заметки не найдены' : 'Загрузка...'}</div>}
     </div>
