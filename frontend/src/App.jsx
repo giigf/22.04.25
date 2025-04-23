@@ -7,7 +7,7 @@ const token = localStorage.getItem('token');
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={token ? <NotesPage /> : <Navigate to="/login" />} />
+      <Route path="" element={token ? <NotesPage /> : <Navigate to="/login" />} />
       <Route path="/login" element={<LoginPage />} />
     </Routes>
   );

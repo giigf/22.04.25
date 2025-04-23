@@ -8,7 +8,6 @@ const SECRET_KEY = 'bratya_secret'; // вынеси в .env, если стесн
 
 router.post('/register', async (req, res) => {
   const { email, password } = req.body;
-  console.log(11)
   const hashed = await bcrypt.hash(password, 10);
   await db('users').insert({ email, password: hashed });
 

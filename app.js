@@ -58,35 +58,35 @@ const authRoutes = require('./routes/auth.js');
   app.use('/', authRoutes); 
 
 
-router.post('/add', async (req, res) => {
-    const {title, content} = req.body;
+  router.post('/notes', auth, async (req, res) => {
+    const { title, content } = req.body;
   
     if (!title || !content) {
       return res.status(400).json({ error: 'title и content обязательны' });
     }
   
     try {
-      const existing = await getNoteByTitle(title);
+      const existing = await db('notes').where({ title, user_id: req.user.id }).first();
       if (existing) {
         return res.status(400).json({ error: 'Note с таким именем уже существует' });
       }
   
-      // Создаем запись в таблице с дополнительными полями
       await createNote({
         title,
         content,
+        user_id: req.user.id
       });
   
-  
-      res.json({ message: `Note ${title} добавлен`});
+      res.json({ message: `Note ${title} добавлен` });
     } catch (error) {
       console.error(`Ошибка сохранения данных Note в БД: ${error.message}`);
       res.status(500).json({ type: 'error', message: 'Ошибка сохранения данных Note в БД' });
     }
   });
+  
 
 
-  router.delete('/delete/:id', async (req, res) => {
+  router.delete('/notes/:id', async (req, res) => {
     const { id } = req.params;
     if (!id) {
       return res.status(400).json({ error: 'id Note обязательно' });
